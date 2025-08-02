@@ -1,0 +1,1289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Quiz Creator</title>
+    <style>
+        :root {
+            --primary-start: #667eea;
+            --primary-end: #764ba2;
+            --success-start: #28a745;
+            --success-end: #20c997;
+            --danger-start: #dc3545;
+            --danger-end: #c82333;
+            --secondary-start: #6c757d;
+            --secondary-end: #495057;
+            --light-bg: #f8f9fa;
+            --border-color: #e9ecef;
+            --text-dark: #333;
+            --text-light: #666;
+        }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--primary-start) 0%, var(--primary-end) 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            max-width: 1000px;
+            width: 100%;
+            min-height: 600px;
+            margin: 20px 0;
+            position: relative;
+        }
+        #globalMessageContainer {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 2000;
+            width: 300px;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .header h1 {
+            color: var(--text-dark);
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        .header p {
+            color: var(--text-light);
+            font-size: 1.1em;
+        }
+        .navigation {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+        .nav-btn {
+            background: var(--light-bg);
+            color: var(--text-dark);
+            border: 2px solid var(--border-color);
+            padding: 10px 20px;
+            border-radius: 25px;
+            margin: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+        .nav-btn.active {
+            background: linear-gradient(135deg, var(--primary-start) 0%, var(--primary-end) 100%);
+            color: white;
+            border-color: var(--primary-start);
+        }
+        .nav-btn:hover {
+            transform: translateY(-2px);
+        }
+        .input-section, .quiz-section, .results-section, .saved-quizzes-section, .analytics-section, .schedule-section {
+            display: none;
+        }
+        .input-section.active, .quiz-section.active, .results-section.active, .saved-quizzes-section.active, .analytics-section.active, .schedule-section.active {
+            display: block;
+        }
+        .paste-area {
+            background: var(--light-bg);
+            border: 2px dashed var(--primary-start);
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        .quiz-name-input {
+            margin-bottom: 20px;
+        }
+        .quiz-name-input input, .folder-select {
+            width: 100%;
+            max-width: 400px;
+            padding: 15px;
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            font-size: 1.1em;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        .folder-selection-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            max-width: 450px;
+            margin: 0 auto 10px auto;
+        }
+        .folder-select {
+            margin-bottom: 0;
+            flex-grow: 1;
+        }
+        textarea {
+            width: 100%;
+            min-height: 300px;
+            padding: 20px;
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            font-size: 1em;
+            font-family: 'Courier New', monospace;
+            resize: vertical;
+            transition: border-color 0.3s ease;
+        }
+        textarea:focus, input:focus {
+            outline: none;
+            border-color: var(--primary-start);
+        }
+        button {
+            background: linear-gradient(135deg, var(--primary-start) 0%, var(--primary-end) 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 50px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            margin: 10px 5px;
+            font-weight: bold;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+        .btn-secondary {
+            background: linear-gradient(135deg, var(--secondary-start) 0%, var(--secondary-end) 100%);
+        }
+        .btn-danger {
+            background: linear-gradient(135deg, var(--danger-start) 0%, var(--danger-end) 100%);
+        }
+        .btn-success {
+            background: linear-gradient(135deg, var(--success-start) 0%, var(--success-end) 100%);
+        }
+        .folder {
+            background: #f1f3f5;
+            border-radius: 15px;
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid var(--border-color);
+        }
+        .folder-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            padding: 10px;
+        }
+        .folder-header h3 {
+            color: var(--text-dark);
+        }
+        .folder-content {
+            padding: 0 10px;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+        .quiz-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin: 15px 0;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            border-left: 5px solid var(--primary-start);
+            transition: all 0.3s ease;
+        }
+        .quiz-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+        }
+        .quiz-card h3 {
+            color: var(--text-dark);
+            margin-bottom: 10px;
+            font-size: 1.3em;
+        }
+        .quiz-meta {
+            color: var(--text-light);
+            font-size: 0.9em;
+            margin-bottom: 15px;
+        }
+        .quiz-stats-inline {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+        }
+        .stat-badge {
+            background: #e7f3ff;
+            color: #0066cc;
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 0.8em;
+            font-weight: bold;
+        }
+        .performance-chart {
+            background: var(--light-bg);
+            border-radius: 15px;
+            padding: 25px;
+            margin: 20px 0;
+            border: 2px solid var(--border-color);
+        }
+        .attempt-bar {
+            background: var(--border-color);
+            height: 30px;
+            border-radius: 15px;
+            margin: 10px 0;
+            position: relative;
+            overflow: hidden;
+        }
+        .attempt-fill {
+            height: 100%;
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 0.9em;
+        }
+        .score-display {
+            background: linear-gradient(135deg, var(--success-start) 0%, var(--success-end) 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            margin: 20px 0;
+        }
+        .empty-state {
+            text-align: center;
+            color: var(--text-light);
+            font-style: italic;
+            padding: 60px 20px;
+            background: var(--light-bg);
+            border-radius: 15px;
+            border: 2px dashed #dee2e6;
+        }
+        .progress-bar {
+            background: var(--border-color);
+            border-radius: 10px;
+            height: 8px;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+        .progress-fill {
+            background: linear-gradient(135deg, var(--primary-start) 0%, var(--primary-end) 100%);
+            height: 100%;
+            border-radius: 10px;
+            transition: width 0.3s ease;
+        }
+        .quiz-card-question {
+            background: var(--light-bg);
+            border-radius: 15px;
+            padding: 30px;
+            margin: 20px 0;
+            border: 2px solid var(--border-color);
+        }
+        .question-text {
+            font-size: 1.2em;
+            color: var(--text-dark);
+            margin-bottom: 25px;
+            line-height: 1.5;
+        }
+        .mcq-options { margin: 20px 0; }
+        .mcq-option {
+            background: white;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .mcq-option:hover {
+            border-color: var(--primary-start);
+            background: #f0f4ff;
+        }
+        .mcq-option.selected {
+            border-color: var(--primary-start);
+            background: #e7f3ff;
+            font-weight: bold;
+        }
+        .answer-input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 1em;
+            margin: 15px 0;
+        }
+        .feedback-section {
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        .feedback-section.correct {
+            background: #d4edda;
+            border: 2px solid #c3e6cb;
+            color: #155724;
+        }
+        .feedback-section.incorrect {
+            background: #f8d7da;
+            border: 2px solid #f5c6cb;
+            color: #721c24;
+        }
+        .error-message, .success-message {
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px;
+            color: white;
+            font-weight: 500;
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out;
+        }
+        .error-message {
+            background: linear-gradient(135deg, var(--danger-start), #a71d2a);
+        }
+        .success-message {
+            background: linear-gradient(135deg, var(--success-start), #1a936f);
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.5);
+            animation: fadeIn 0.3s;
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 30px;
+            border: 1px solid #888;
+            width: 90%;
+            max-width: 450px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        .modal-content p {
+            margin-bottom: 20px;
+            font-size: 1.1em;
+            color: var(--text-dark);
+        }
+        .modal-content input {
+             width: 100%;
+            padding: 15px;
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            font-size: 1.1em;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .schedule-list {
+            list-style-type: none;
+        }
+        .schedule-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            background: var(--light-bg);
+            border-radius: 10px;
+            margin-bottom: 10px;
+            border-left: 4px solid var(--secondary-start);
+        }
+        .schedule-item.due {
+             border-left-color: var(--success-start);
+        }
+        .fade-in { animation: fadeIn 0.5s ease-in; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+    <div id="globalMessageContainer"></div>
+    <div class="container">
+        <div class="header">
+            <h1>🎓 Advanced Quiz Creator</h1>
+            <p>Create, save, and track your quiz performance over time</p>
+        </div>
+        <div class="navigation">
+            <button class="nav-btn active" onclick="showSection('input-section')">📝 Create Quiz</button>
+            <button class="nav-btn" onclick="showSection('saved-quizzes-section')">📚 Saved Quizzes</button>
+            <button class="nav-btn" onclick="showSection('schedule-section')">🗓️ My Schedule</button>
+        </div>
+        <!-- Input Section -->
+        <div class="input-section active">
+            <div class="paste-area">
+                <h3>📝 Create New Quiz</h3>
+                <div class="quiz-name-input">
+                    <input type="text" id="quizName" placeholder="Enter quiz name (e.g., 'History - Jizya Tax')" />
+                    <div class="folder-selection-container">
+                        <select id="folderSelect" class="folder-select"></select>
+                        <button onclick="openCreateFolderModal()" class="btn-secondary" style="padding: 15px 20px; font-size: 1em; margin: 0;">+ New</button>
+                    </div>
+                </div>
+                <textarea id="quizInput" placeholder="Paste your quiz content here..."></textarea>
+                <div style="text-align: center; margin-top: 20px;">
+                    <button onclick="parseQuiz()">🚀 Create & Save Quiz</button>
+                    <button onclick="loadSampleQuiz()" class="btn-secondary">📚 Load Sample</button>
+                </div>
+            </div>
+            <div id="parseResults"></div>
+        </div>
+        <!-- Saved Quizzes Section -->
+        <div class="saved-quizzes-section">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                 <h2 style="color: #333;">📚 Your Saved Quizzes</h2>
+                 <button onclick="openCreateFolderModal()">📁 Create Folder</button>
+            </div>
+            <div id="savedQuizzesList"></div>
+        </div>
+        <!-- Schedule Section -->
+        <div class="schedule-section">
+             <h2 style="color: #333; margin-bottom: 20px;">🗓️ My Schedule</h2>
+             <div id="scheduleContent"></div>
+        </div>
+        <!-- Analytics Section -->
+        <div class="analytics-section">
+            <div id="analyticsContent"></div>
+        </div>
+        <!-- Quiz Section -->
+        <div class="quiz-section">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <div class="quiz-card-question fade-in" id="quizCard">
+                <div class="question-text" id="currentQuestion"></div>
+                <div class="mcq-options" id="mcqOptions" style="display: none;"></div>
+                <div id="textAnswerContainer" style="display: none;">
+                    <textarea class="answer-input" id="userAnswer" placeholder="Type your answer here..."></textarea>
+                </div>
+                <div style="text-align: center;">
+                    <button onclick="submitAnswer()" id="submitBtn">Submit Answer</button>
+                </div>
+            </div>
+            <div id="feedbackSection" class="feedback-section" style="display: none;"></div>
+            <div style="text-align: center; margin-top: 20px;">
+                <button onclick="endQuiz()" class="btn-secondary">🏁 End Quiz</button>
+            </div>
+        </div>
+        <!-- Results Section -->
+        <div class="results-section">
+            <div id="resultsContent"></div>
+        </div>
+    </div>
+
+    <!-- Modal for Confirmations -->
+    <div id="confirmationModal" class="modal">
+        <div class="modal-content">
+            <p id="modalText"></p>
+            <button id="modalConfirmBtn">Confirm</button>
+            <button id="modalCancelBtn" class="btn-secondary">Cancel</button>
+        </div>
+    </div>
+
+    <!-- Modal for Editing Quiz Name -->
+    <div id="editNameModal" class="modal">
+        <div class="modal-content">
+            <p>Edit Quiz Name</p>
+            <input type="text" id="editQuizNameInput">
+            <button id="saveNameChangeBtn">Save Changes</button>
+            <button onclick="closeEditModal()" class="btn-secondary">Cancel</button>
+        </div>
+    </div>
+    
+    <!-- Modal for Creating Folder -->
+    <div id="createFolderModal" class="modal">
+        <div class="modal-content">
+            <p>Create New Folder</p>
+            <input type="text" id="newFolderNameInput" placeholder="Enter folder name">
+            <button onclick="createFolder()">Create</button>
+            <button onclick="closeCreateFolderModal()" class="btn-secondary">Cancel</button>
+        </div>
+    </div>
+
+
+    <script>
+        // --- GLOBAL STATE ---
+        let questions = [];
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let userAnswers = [];
+        let currentQuiz = null;
+        let incorrectQuestions = [];
+
+        // --- INITIALIZATION ---
+        window.addEventListener('load', function() {
+            loadFoldersAndQuizzes();
+            populateFolderDropdown();
+            loadSchedule();
+        });
+
+        // --- FOLDER MANAGEMENT ---
+        function getFolders() {
+            return JSON.parse(localStorage.getItem('quizFolders') || '{"Uncategorized": []}');
+        }
+
+        function saveFolders(folders) {
+            localStorage.setItem('quizFolders', JSON.stringify(folders));
+        }
+
+        function openCreateFolderModal() {
+            document.getElementById('createFolderModal').style.display = 'block';
+            document.getElementById('newFolderNameInput').focus();
+        }
+
+        function closeCreateFolderModal() {
+            document.getElementById('createFolderModal').style.display = 'none';
+        }
+
+        function createFolder() {
+            const folderName = document.getElementById('newFolderNameInput').value.trim();
+            if (!folderName) {
+                showMessage('Folder name cannot be empty!', 'error');
+                return;
+            }
+            let folders = getFolders();
+            if (folders[folderName]) {
+                showMessage('A folder with this name already exists!', 'error');
+                return;
+            }
+            folders[folderName] = [];
+            saveFolders(folders);
+            loadFoldersAndQuizzes();
+            populateFolderDropdown(folderName); // Pass new folder name to select it
+            closeCreateFolderModal();
+            showMessage(`Folder "${folderName}" created successfully!`, 'success');
+            document.getElementById('newFolderNameInput').value = '';
+        }
+        
+        function populateFolderDropdown(selectAfterCreation = null) {
+            const folders = getFolders();
+            const select = document.getElementById('folderSelect');
+            const currentVal = select.value;
+
+            select.innerHTML = Object.keys(folders).map(folderName => `<option value="${folderName}">${folderName}</option>`).join('');
+            
+            if (selectAfterCreation) {
+                select.value = selectAfterCreation;
+            } else if (currentVal && folders[currentVal]) {
+                select.value = currentVal;
+            }
+        }
+
+        // --- CORE QUIZ CREATION ---
+        function parseQuiz() {
+            const input = document.getElementById('quizInput').value.trim();
+            const quizName = document.getElementById('quizName').value.trim();
+            const selectedFolder = document.getElementById('folderSelect').value;
+
+            if (!input) {
+                showMessage('Please paste your quiz content first!', 'error');
+                return;
+            }
+            if (!quizName) {
+                showMessage('Please enter a name for your quiz!', 'error');
+                return;
+            }
+            try {
+                const parsedQuestions = parseQuizContent(input);
+                if (parsedQuestions.length === 0) {
+                    showMessage('No questions found. Please check your format and try again.', 'error');
+                    return;
+                }
+                const quiz = {
+                    id: Date.now(),
+                    name: quizName,
+                    questions: parsedQuestions,
+                    created: new Date().toISOString(),
+                    attempts: []
+                };
+                
+                let folders = getFolders();
+                folders[selectedFolder].push(quiz);
+                saveFolders(folders);
+
+                currentQuiz = quiz;
+                showQuizStats(quiz);
+                showMessage(`Successfully created "${quizName}" in folder "${selectedFolder}"!`, 'success');
+                document.getElementById('quizInput').value = '';
+                document.getElementById('quizName').value = '';
+                loadFoldersAndQuizzes();
+
+
+            } catch (error) {
+                showMessage('Error parsing quiz: ' + error.message, 'error');
+                console.error(error);
+            }
+        }
+
+        function parseQuizContent(content) {
+            const parsed = [];
+            const lines = content.split('\n').map(line => line.trim()).filter(line => line.length > 0);
+            const answerKeyIndex = lines.findIndex(line => line.toLowerCase().includes('answer key'));
+            let questionLines = answerKeyIndex !== -1 ? lines.slice(0, answerKeyIndex) : lines;
+            let answerKeyLines = answerKeyIndex !== -1 ? lines.slice(answerKeyIndex + 1) : [];
+            const answerKey = parseAnswerKey(answerKeyLines);
+
+            let i = 0;
+            let questionCount = 1;
+            while (i < questionLines.length) {
+                const line = questionLines[i];
+                if (line.startsWith('Section') || /^[A-Z\s-]+$/.test(line) || line.toLowerCase().startsWith('part')) {
+                    i++;
+                    continue;
+                }
+                if (isQuestionLine(line)) {
+                    const questionObj = parseQuestionWithAnswer(questionLines, i, answerKey, questionCount);
+                    if (questionObj) {
+                        parsed.push(questionObj);
+                        i = questionObj.nextIndex;
+                        questionCount++;
+                    } else { i++; }
+                } else { i++; }
+            }
+            return parsed;
+        }
+
+        function parseAnswerKey(answerKeyLines) {
+            const answers = {};
+            let questionNum = 1;
+            for (const line of answerKeyLines) {
+                if (line.startsWith('Section')) continue;
+                const match = line.match(/^\s*(\d+)\.\s*(.+)/);
+                if (match) {
+                    answers[parseInt(match[1], 10)] = match[2].trim();
+                } else if (line.trim() && !line.includes(':')) {
+                    answers[questionNum] = line.trim();
+                    questionNum++;
+                }
+            }
+            return answers;
+        }
+
+        function isQuestionLine(line) {
+            const startsWithNumber = /^\d+\./.test(line) || /^Question \d+:/i.test(line);
+            const hasQuestionMark = line.includes('?');
+            const startsWithKeyword = /^(Assertion|Reason|Match|Which of the following|Consider the following)/i.test(line);
+            const isFillInTheBlank = line.includes('______');
+            return startsWithNumber || hasQuestionMark || startsWithKeyword || isFillInTheBlank;
+        }
+
+        function parseQuestionWithAnswer(lines, startIndex, answerKey, questionNumber) {
+            let questionText = lines[startIndex].replace(/^\d+\.\s*/, '').replace(/^Question \d+:\s*/i, '').trim();
+            let options = [];
+            let answer = '';
+            let type = 'text';
+            let i = startIndex + 1;
+
+            while (i < lines.length && !isQuestionLine(lines[i]) && !lines[i].toLowerCase().startsWith('answer:')) {
+                const line = lines[i];
+                if (/^[a-d]\)/i.test(line) || /^[A-D]\./i.test(line)) {
+                    options.push(line);
+                    type = 'mcq';
+                } else if (line.trim().length > 0) {
+                    questionText += ' ' + line;
+                }
+                i++;
+            }
+            
+            if (i < lines.length && lines[i].toLowerCase().startsWith('answer:')) {
+                 answer = lines[i].replace(/^answer:\s*/i, '').trim();
+                 i++;
+            }
+
+            if (!answer) answer = answerKey[questionNumber];
+            if (!answer) return null;
+
+            if (questionText.includes('______')) type = 'fill';
+            else if (options.length > 0) type = 'mcq';
+            
+            if (questionText.toLowerCase().includes('assertion') && questionText.toLowerCase().includes('reason')) {
+                type = 'mcq';
+                if (options.length === 0) {
+                    options = [
+                        'a) Both A and R are true, and R is the correct explanation of A.',
+                        'b) Both A and R are true, but R is NOT the correct explanation of A.',
+                        'c) A is true, but R is false.',
+                        'd) A is false, but R is true.'
+                    ];
+                }
+            }
+            return { question: questionText, options, answer, type, nextIndex: i, questionNumber, topic: extractTopic(questionText) };
+        }
+
+        function extractTopic(questionText) {
+            if (questionText.toLowerCase().includes('jizya')) return 'Jizya Tax';
+            if (questionText.toLowerCase().includes('aurangzeb')) return 'Aurangzeb';
+            if (questionText.toLowerCase().includes('ncert')) return 'NCERT Textbook';
+            if (questionText.toLowerCase().includes('mughal')) return 'Mughal Empire';
+            return 'General History';
+        }
+
+        // --- UI & VIEW MANAGEMENT ---
+        function showSection(sectionClass) {
+            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+            const navButtons = document.querySelectorAll('.nav-btn');
+            if (sectionClass === 'input-section') navButtons[0].classList.add('active');
+            else if (sectionClass === 'saved-quizzes-section') navButtons[1].classList.add('active');
+            else if (sectionClass === 'schedule-section') navButtons[2].classList.add('active');
+
+
+            document.querySelectorAll('.input-section, .quiz-section, .results-section, .saved-quizzes-section, .analytics-section, .schedule-section')
+                .forEach(section => section.classList.remove('active'));
+            document.querySelector('.' + sectionClass).classList.add('active');
+            
+            if(sectionClass === 'schedule-section') loadSchedule();
+        }
+
+        function showMessage(message, type, duration = 4000) {
+            const container = document.getElementById('globalMessageContainer');
+            const className = type === 'error' ? 'error-message' : 'success-message';
+            const messageId = `msg-${Date.now()}`;
+            const messageHtml = `<div id="${messageId}" class="${className}">${message}</div>`;
+            container.insertAdjacentHTML('beforeend', messageHtml);
+            const msgElement = document.getElementById(messageId);
+            setTimeout(() => { msgElement.style.opacity = 1; }, 10);
+            setTimeout(() => {
+                if (msgElement) {
+                    msgElement.style.opacity = 0;
+                    setTimeout(() => msgElement.remove(), 500);
+                }
+            }, duration);
+        }
+
+        function showConfirmation(message, onConfirm) {
+            const modal = document.getElementById('confirmationModal');
+            document.getElementById('modalText').textContent = message;
+            modal.style.display = 'block';
+
+            const confirmBtn = document.getElementById('modalConfirmBtn');
+            const cancelBtn = document.getElementById('modalCancelBtn');
+            const newConfirmBtn = confirmBtn.cloneNode(true);
+            confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
+
+            newConfirmBtn.onclick = () => {
+                modal.style.display = 'none';
+                if (onConfirm) onConfirm();
+            };
+            cancelBtn.onclick = () => { modal.style.display = 'none'; };
+        }
+
+        // --- SAVED QUIZZES & ANALYTICS VIEWS ---
+        function loadFoldersAndQuizzes() {
+            const folders = getFolders();
+            const container = document.getElementById('savedQuizzesList');
+            if (Object.keys(folders).length === 0 || Object.values(folders).every(arr => arr.length === 0)) {
+                container.innerHTML = `<div class="empty-state"><h3>No saved quizzes yet</h3><p>Create a folder and a quiz to get started!</p></div>`;
+                return;
+            }
+
+            container.innerHTML = Object.entries(folders).map(([folderName, quizzes]) => {
+                const quizzesHtml = quizzes.length > 0 ? quizzes.map(quiz => `
+                    <div class="quiz-card">
+                        <h3>${quiz.name}</h3>
+                        <div class="quiz-meta">Created: ${new Date(quiz.created).toLocaleDateString()} | Attempts: ${quiz.attempts ? quiz.attempts.length : 0}</div>
+                        <div class="quiz-stats-inline">
+                            <span class="stat-badge">${quiz.questions.length} Questions</span>
+                            ${quiz.attempts && quiz.attempts.length > 0 ? `<span class="stat-badge">Best: ${Math.max(...quiz.attempts.map(a => a.percentage))}%</span>` : ''}
+                        </div>
+                        <div style="margin-top: 15px;">
+                            <button onclick="loadQuiz('${quiz.id}')" class="btn-success">📝 Take Quiz</button>
+                            <button onclick="showQuizAnalysis('${quiz.id}')" class="btn-secondary">📊 Detailed Analysis</button>
+                            <button onclick="event.stopPropagation(); openEditModal('${quiz.id}', '${quiz.name}')" class="btn-secondary">✏️ Edit</button>
+                            <button onclick="event.stopPropagation(); deleteQuiz('${quiz.id}')" class="btn-danger">🗑️ Delete</button>
+                        </div>
+                    </div>`).join('') : '<p style="padding: 15px; color: #888;">This folder is empty.</p>';
+
+                return `
+                    <div class="folder">
+                        <div class="folder-header" onclick="toggleFolder(this)">
+                            <h3>📁 ${folderName}</h3>
+                            <span>▼</span>
+                        </div>
+                        <div class="folder-content">
+                            ${quizzesHtml}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function toggleFolder(headerElement) {
+            const content = headerElement.nextElementSibling;
+            if (content.style.maxHeight) {
+                content.style.maxHeight = null;
+                headerElement.querySelector('span').textContent = '▼';
+            } else {
+                content.style.maxHeight = content.scrollHeight + "px";
+                headerElement.querySelector('span').textContent = '▲';
+            }
+        }
+        
+        function deleteQuiz(quizId) {
+            showConfirmation('Are you sure you want to delete this quiz?', () => {
+                let folders = getFolders();
+                for (const folderName in folders) {
+                    folders[folderName] = folders[folderName].filter(q => q.id !== Number(quizId));
+                }
+                saveFolders(folders);
+                loadFoldersAndQuizzes();
+                showMessage('Quiz deleted successfully.', 'success');
+            });
+        }
+        
+        function openEditModal(quizId, currentName) {
+            const modal = document.getElementById('editNameModal');
+            const input = document.getElementById('editQuizNameInput');
+            const saveBtn = document.getElementById('saveNameChangeBtn');
+
+            input.value = currentName;
+            modal.style.display = 'block';
+            input.focus();
+
+            const newSaveBtn = saveBtn.cloneNode(true);
+            saveBtn.parentNode.replaceChild(newSaveBtn, saveBtn);
+
+            newSaveBtn.onclick = () => updateQuizName(quizId);
+        }
+
+        function closeEditModal() {
+            document.getElementById('editNameModal').style.display = 'none';
+        }
+
+        function updateQuizName(quizId) {
+            const newName = document.getElementById('editQuizNameInput').value.trim();
+            if (!newName) {
+                showMessage('Quiz name cannot be empty!', 'error');
+                return;
+            }
+
+            let folders = getFolders();
+            for (const folderName in folders) {
+                const quizIndex = folders[folderName].findIndex(q => q.id === Number(quizId));
+                if (quizIndex !== -1) {
+                    folders[folderName][quizIndex].name = newName;
+                    break;
+                }
+            }
+            
+            saveFolders(folders);
+            loadFoldersAndQuizzes();
+            closeEditModal();
+            showMessage('Quiz name updated successfully!', 'success');
+        }
+
+
+        function showQuizAnalysis(quizId) {
+            let folders = getFolders();
+            let quiz = null;
+            for (const folderName in folders) {
+                quiz = folders[folderName].find(q => q.id == quizId);
+                if (quiz) break;
+            }
+
+            if (!quiz || !quiz.attempts || quiz.attempts.length === 0) {
+                showMessage('No attempts found for this quiz to analyze.', 'error');
+                return;
+            }
+
+            showSection('analytics-section');
+            const container = document.getElementById('analyticsContent');
+            const allAttempts = quiz.attempts;
+
+            const chartHtml = allAttempts.map((attempt, index) => {
+                const color = attempt.percentage >= 80 ? 'var(--success-start)' :
+                              attempt.percentage >= 60 ? '#ffc107' : 'var(--danger-start)';
+                return `
+                    <div style="margin: 15px 0;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; font-size: 0.9em;">
+                            <span>Attempt ${index + 1}</span>
+                            <span>${new Date(attempt.endTime).toLocaleDateString()}</span>
+                            <span style="font-weight: bold;">${attempt.percentage}%</span>
+                        </div>
+                        <div class="attempt-bar">
+                            <div class="attempt-fill" style="width: ${attempt.percentage}%; background: ${color};">
+                                ${attempt.score}/${attempt.totalQuestions}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            const attemptsTableHtml = `
+                <div style="overflow-x: auto; margin-top: 20px;">
+                    <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                        <thead>
+                            <tr style="background-color: var(--light-bg);">
+                                <th style="padding: 12px; border-bottom: 2px solid var(--border-color);">Attempt</th>
+                                <th style="padding: 12px; border-bottom: 2px solid var(--border-color);">Date</th>
+                                <th style="padding: 12px; border-bottom: 2px solid var(--border-color);">Score</th>
+                                <th style="padding: 12px; border-bottom: 2px solid var(--border-color);">Percentage</th>
+                                <th style="padding: 12px; border-bottom: 2px solid var(--border-color);">Incorrect</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${allAttempts.map((attempt, index) => `
+                                <tr style="border-bottom: 1px solid var(--border-color);">
+                                    <td style="padding: 12px;">${index + 1}</td>
+                                    <td style="padding: 12px;">${new Date(attempt.endTime).toLocaleString()}</td>
+                                    <td style="padding: 12px;">${attempt.score}/${attempt.totalQuestions}</td>
+                                    <td style="padding: 12px; font-weight: bold;">${attempt.percentage}%</td>
+                                    <td style="padding: 12px;">${attempt.incorrectQuestions.length}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+
+            container.innerHTML = `
+                <div class="fade-in">
+                    <button onclick="showSection('saved-quizzes-section')" class="btn-secondary">← Back to Saved Quizzes</button>
+                    <h2 style="color: #333; margin: 20px 0; text-align: center;">Detailed Analysis for "${quiz.name}"</h2>
+                    <div class="performance-chart">
+                        <h3>📈 All Attempts History</h3>
+                        ${chartHtml}
+                    </div>
+                    <div class="quiz-card">
+                        <h3>📋 Attempts Report</h3>
+                        ${attemptsTableHtml}
+                    </div>
+                </div>
+            `;
+        }
+
+        // --- QUIZ GAME FLOW ---
+        function loadQuiz(quizId) {
+            let folders = getFolders();
+            let quiz = null;
+            for (const folderName in folders) {
+                quiz = folders[folderName].find(q => q.id === Number(quizId));
+                if (quiz) break;
+            }
+
+            if (!quiz) {
+                showMessage('Quiz not found!', 'error');
+                return;
+            }
+            currentQuiz = quiz;
+            questions = [...quiz.questions];
+            startQuiz();
+        }
+
+        function startQuiz() {
+            if (questions.length === 0) return;
+            questions = shuffleArray([...questions]);
+            currentQuestionIndex = 0;
+            score = 0;
+            userAnswers = [];
+            incorrectQuestions = [];
+            showSection('quiz-section');
+            displayCurrentQuestion();
+        }
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        function displayCurrentQuestion() {
+            const question = questions[currentQuestionIndex];
+            document.getElementById('currentQuestion').textContent = `Q${currentQuestionIndex + 1}: ${question.question}`;
+
+            document.getElementById('mcqOptions').style.display = 'none';
+            document.getElementById('textAnswerContainer').style.display = 'none';
+            document.getElementById('feedbackSection').style.display = 'none';
+            document.getElementById('submitBtn').style.display = 'inline-block';
+
+            if (question.type === 'mcq') {
+                const mcqContainer = document.getElementById('mcqOptions');
+                mcqContainer.style.display = 'block';
+                mcqContainer.innerHTML = question.options.map((option, index) => `<div class="mcq-option" onclick="selectMCQOption(this)" data-option-text="${option}">${option}</div>`).join('');
+            } else {
+                 document.getElementById('textAnswerContainer').style.display = 'block';
+                document.getElementById('userAnswer').value = '';
+                document.getElementById('userAnswer').focus();
+            }
+            
+            const progress = (currentQuestionIndex / questions.length) * 100;
+            document.getElementById('progressFill').style.width = progress + '%';
+        }
+
+        function selectMCQOption(optionElement) {
+            document.querySelectorAll('.mcq-option').forEach(opt => opt.classList.remove('selected'));
+            optionElement.classList.add('selected');
+        }
+
+        function submitAnswer() {
+            const question = questions[currentQuestionIndex];
+            let userAnswerText = '';
+
+            if (question.type === 'mcq') {
+                const selectedOption = document.querySelector('.mcq-option.selected');
+                if (!selectedOption) {
+                    showMessage('Please select an option first!', 'error');
+                    return;
+                }
+                userAnswerText = selectedOption.dataset.optionText;
+            } else {
+                userAnswerText = document.getElementById('userAnswer').value.trim();
+                if (!userAnswerText) {
+                    showMessage('Please enter your answer first!', 'error');
+                    return;
+                }
+            }
+            userAnswers[currentQuestionIndex] = userAnswerText;
+            checkAnswer(userAnswerText);
+        }
+
+        function checkAnswer(userAnswer) {
+            document.getElementById('submitBtn').style.display = 'none';
+            const feedbackDiv = document.getElementById('feedbackSection');
+            const question = questions[currentQuestionIndex];
+
+            const normalizedUserAnswer = userAnswer.trim().toLowerCase();
+            const normalizedCorrectAnswer = question.answer.trim().toLowerCase();
+
+            let isCorrect = false;
+            if (question.type === 'mcq') {
+                isCorrect = normalizedCorrectAnswer.includes(normalizedUserAnswer.replace(/^[a-d]\)\s*/i, ''));
+            } else {
+                isCorrect = normalizedUserAnswer === normalizedCorrectAnswer;
+            }
+
+            if (isCorrect) {
+                score++;
+                feedbackDiv.className = 'feedback-section correct';
+                feedbackDiv.innerHTML = `<h4>🎉 Correct!</h4>`;
+            } else {
+                incorrectQuestions.push({
+                    question: question.question,
+                    correctAnswer: question.answer,
+                    userAnswer: userAnswers[currentQuestionIndex] || 'No answer',
+                    topic: question.topic
+                });
+                feedbackDiv.className = 'feedback-section incorrect';
+                feedbackDiv.innerHTML = `<h4>🤔 Incorrect</h4><p style="margin-top:10px;">The correct answer is: <strong>${question.answer}</strong></p>`;
+            }
+
+            feedbackDiv.innerHTML += `<button onclick="nextQuestion()" style="margin-top: 15px;">Next Question →</button>`;
+            feedbackDiv.style.display = 'block';
+        }
+
+        function nextQuestion() {
+            currentQuestionIndex++;
+            if (currentQuestionIndex >= questions.length) {
+                finishQuiz();
+            } else {
+                displayCurrentQuestion();
+            }
+        }
+
+        function endQuiz() {
+            showConfirmation('Are you sure you want to end the quiz early?', finishQuiz);
+        }
+
+        function finishQuiz() {
+            const totalQuestions = questions.length > 0 ? questions.length : currentQuestionIndex;
+            if (totalQuestions === 0) {
+                showSection('saved-quizzes-section');
+                return;
+            }
+            const percentage = Math.round((score / totalQuestions) * 100);
+            const attempt = {
+                quizId: currentQuiz.id,
+                startTime: new Date().toISOString(),
+                endTime: new Date().toISOString(),
+                score: score,
+                totalQuestions: totalQuestions,
+                percentage: percentage,
+                incorrectQuestions: incorrectQuestions
+            };
+            
+            let folders = getFolders();
+            for (const folderName in folders) {
+                const quizIndex = folders[folderName].findIndex(q => q.id === currentQuiz.id);
+                if (quizIndex !== -1) {
+                    if (!folders[folderName][quizIndex].attempts) {
+                        folders[folderName][quizIndex].attempts = [];
+                    }
+                    folders[folderName][quizIndex].attempts.push(attempt);
+                    break;
+                }
+            }
+            saveFolders(folders);
+            
+            showResults();
+        }
+        
+        // --- RESULTS & SUGGESTIONS ---
+        function showResults() {
+            const percentage = Math.round((score / questions.length) * 100);
+            let message = 'Keep studying! Focus on your weak areas. 💪';
+            if (percentage >= 90) message = 'Excellent work! You have a strong grasp of the material. 🌟';
+            else if (percentage >= 70) message = 'Great job! Keep up the good work. 👍';
+
+            const resultsHtml = `
+                <div class="score-display">
+                    <h2>Your Score: ${score}/${questions.length} (${percentage}%)</h2>
+                    <p>${message}</p>
+                </div>
+                <div style="text-align: center; margin-top: 30px;">
+                    <button onclick="scheduleReview('${currentQuiz.id}')" class="btn-success">🗓️ Schedule for Spaced Repetition</button>
+                    <button onclick="showSection('saved-quizzes-section')" class="btn-secondary">📚 Back to Quizzes</button>
+                </div>
+            `;
+            document.getElementById('resultsContent').innerHTML = resultsHtml;
+            showSection('results-section');
+        }
+
+        // --- SPACED REPETITION SCHEDULER ---
+        function getSchedule() {
+            return JSON.parse(localStorage.getItem('quizSchedule') || '[]');
+        }
+
+        function saveSchedule(schedule) {
+            localStorage.setItem('quizSchedule', JSON.stringify(schedule));
+        }
+
+        function scheduleReview(quizId) {
+            let schedule = getSchedule();
+            // Remove any existing schedule for this quiz to reset it
+            schedule = schedule.filter(item => item.quizId !== quizId);
+
+            const intervals = [1, 7, 16]; // Review in 1 day, 7 days, 16 days
+            const now = new Date();
+
+            intervals.forEach(days => {
+                const reviewDate = new Date();
+                reviewDate.setDate(now.getDate() + days);
+                schedule.push({
+                    quizId: quizId,
+                    reviewDate: reviewDate.toISOString().split('T')[0] // Store as YYYY-MM-DD
+                });
+            });
+
+            saveSchedule(schedule);
+            showMessage('Quiz scheduled for review!', 'success');
+            showSection('schedule-section');
+        }
+
+        function loadSchedule() {
+            const schedule = getSchedule();
+            const container = document.getElementById('scheduleContent');
+            const today = new Date().toISOString().split('T')[0];
+
+            const dueToday = [];
+            const upcoming = [];
+
+            schedule.forEach(item => {
+                if (item.reviewDate <= today) {
+                    dueToday.push(item);
+                } else {
+                    upcoming.push(item);
+                }
+            });
+
+            // Sort upcoming by date
+            upcoming.sort((a, b) => new Date(a.reviewDate) - new Date(b.reviewDate));
+
+            let html = '<h3>Due for Review Today</h3>';
+            if (dueToday.length > 0) {
+                html += '<ul class="schedule-list">';
+                dueToday.forEach(item => {
+                    const quiz = findQuizById(item.quizId);
+                    if (quiz) {
+                        html += `
+                            <li class="schedule-item due">
+                                <span><strong>${quiz.name}</strong> - Due Today</span>
+                                <button onclick="loadQuiz('${quiz.id}')" class="btn-success" style="padding: 10px 20px; font-size: 0.9em; margin: 0;">Start Review</button>
+                            </li>
+                        `;
+                    }
+                });
+                html += '</ul>';
+            } else {
+                html += '<p>Nothing due for review today. Great job staying on top of your studies!</p>';
+            }
+
+            html += '<h3 style="margin-top: 30px;">Upcoming Reviews</h3>';
+             if (upcoming.length > 0) {
+                html += '<ul class="schedule-list">';
+                upcoming.forEach(item => {
+                    const quiz = findQuizById(item.quizId);
+                    if (quiz) {
+                        html += `
+                            <li class="schedule-item">
+                                <span><strong>${quiz.name}</strong> - Due on ${new Date(item.reviewDate).toLocaleDateString()}</span>
+                            </li>
+                        `;
+                    }
+                });
+                html += '</ul>';
+            } else {
+                html += '<p>No upcoming reviews scheduled. Complete a quiz to get started!</p>';
+            }
+
+            container.innerHTML = html;
+        }
+
+        function findQuizById(quizId) {
+            const folders = getFolders();
+            for (const folderName in folders) {
+                const quiz = folders[folderName].find(q => q.id === Number(quizId));
+                if (quiz) return quiz;
+            }
+            return null;
+        }
+
+
+        function showQuizStats(quiz) {
+            document.getElementById('parseResults').innerHTML = `<div style="background: #e7f3ff; border: 2px solid #b3d9ff; border-radius: 10px; padding: 20px; margin: 20px 0; text-align: center;">
+                <p>Successfully created "${quiz.name}" with ${quiz.questions.length} questions!</p>
+                <button onclick="startQuiz()">🎯 Start Quiz</button>
+            </div>`;
+        }
+
+        function loadSampleQuiz() {
+            document.getElementById('quizInput').value = `1. The recent controversy surrounding the Jizya tax was sparked by changes in a new textbook for which class?
+a) Class 7
+b) Class 8
+c) Class 9
+d) Class 10
+
+2. According to the provided text, the new NCERT Social Science textbook covers which period of Indian History?
+a) Ancient Indian History
+b) Modern Indian History
+c) Medieval Indian History
+d) Post-Independence History
+
+3. The new controversial textbook is for the subject of ______.
+
+Answer Key
+1. b) Class 8
+2. c) Medieval Indian History
+3. Social Science`;
+            document.getElementById('quizName').value = 'Sample Quiz - Jizya Tax';
+        }
+    </script>
+</body>
+</html>
